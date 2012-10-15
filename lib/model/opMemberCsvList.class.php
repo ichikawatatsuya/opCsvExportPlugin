@@ -124,10 +124,10 @@ class opMemberCsvList implements Iterator
       $image_q = $image_q->andWhere('member_id <= ?', $to);
       $file_q = Doctrine::getTable('File')->createQuery()->select('id, name')->where('id = any (select file_id from member_image where ? <= member_id and member_id <= ?)',array($from ,$to));
     }
-    return array('memberList' => $member_q->execute(array(), Doctrine::HYDRATE_NONE),
-                 'configList' => $config_q->execute(array(), Doctrine::HYDRATE_NONE),
-                 'profileList' => $profile_q->execute(array(), Doctrine::HYDRATE_NONE),
-                 'imageList' => $image_q->execute(array(), Doctrine::HYDRATE_NONE),
-                 'fileList' => $file_q->execute(array(), Doctrine::HYDRATE_NONE));
+    return array('memberList' => $member_q->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'configList' => $config_q->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'profileList' => $profile_q->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'imageList' => $image_q->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'fileList' => $file_q->execute(array(), Doctrine::HYDRATE_ARRAY));
   }
 }

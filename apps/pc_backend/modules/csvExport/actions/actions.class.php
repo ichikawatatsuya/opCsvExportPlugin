@@ -37,98 +37,66 @@ class csvExportActions extends sfActions
       $fileList = $dataList['fileList'];
       $csvStr = opMemberCsvList::getHeader()."\n";
 
-      for ($i = 0; $i <= count($memberList) ; $i++)
+      $memberLength = count($memberList);
+      for ($i = 0; $i < $memberLength; $i++)
       {
-        if(isset($memberList[$i]))
+        if (isset($memberList[$i]))
         {
+          $member_id = $memberList[$i]['id'];
+
           $csvStr .= '"'.implode('","', $memberList[$i]).'"';
 
-          $tmpconf[0] = '';
-          $tmpconf[1] = '';
-          $tmpconf[2] = '';
+          $tmpconf = array('', '', '');
           foreach ($configList as $config)
           {
-            if ($config[0] == ($i + 1))
+            if ($config['member_id'] == $member_id)
             {
-              switch ($config[1])
+              switch ($config['name'])
               {
                 case 'lastLogin':
-                  $tmpconf[0] = $config[3];
+                  $tmpconf[0] = $config['value_datetime'];
                   break;
 
                 case 'pc_address':
-                  $tmpconf[1] = $config[2];
+                  $tmpconf[1] = $config['value'];
                   break;
 
                 case 'mobile_address':
-                  $tmpconf[2] = $config[2];
+                  $tmpconf[2] = $config['value'];
                   break;
               }
             }
           }
+          $csvStr .= ',"'.implode('","', $tmpconf).'"';
 
-          $csvStr .= ',"'.$tmpconf[0].'","'.$tmpconf[1].'","'.$tmpconf[2].'"';
-          $tmpfile = array();
+          $tmpfile =array('', '', '');
+          $num = 0;
           foreach ($imageList as $image)
           {
-            if ($image[0] == ($i + 1))
+            if ($image['member_id'] == $member_id)
             {
               foreach ($fileList as $file)
               {
-                if ($image[1] == $file[0])
+                if ($image['file_id'] == $file['id'])
                 {
-                  $tmpfile[] = $file[1];
+                  $tmpfile[$num] = $file['name'];
+                  $num++;
                 }
               }
             }
           }
-          if (count($tmpfile))
-          {
-            $csvStr .= ',"'.implode('","', $tmpfile).'"';
-          }
-          else
-          {
-            $csvStr .= ',"","",""';
-          }
 
-          $tmpprof[0] = '';
-          $tmpprof[1] = '';
-          $tmpprof[2] = '';
-          $tmpprof[3] = '';
-          $tmpprof[4] = '';
+          $csvStr .= ',"'.implode('","', $tmpfile).'"';
+
+          $tmpprof = array('', '', '', '', '');
           foreach ($profileList as $profile)
           {
-            if($profile[0] == ($i + 1))
+            if($profile['member_id'] == $member_id)
             {
-              switch ($profile[1])
-              {
-                case 1:
-                  $tmpprof[0] = $profile[2];
-                  break;
-
-                case 2:
-                  $tmpprof[1] = $profile[2];
-                  break;
-
-                case 3:
-                  $tmpprof[2] = $profile[2];
-                  break;
-
-                case 4:
-                  $tmpprof[3] = $profile[2];
-                  break;
-
-                case 5:
-                  $tmpprof[4] = $profile[2];
-                  break;
-              }
+              $tmpprof[$profile['profile_id'] - 1] = $profile['value'];
             }
           }
-          $csvStr .= ',"'.$tmpprof[0].'","'
-                        .$tmpprof[1].'","'
-                        .$tmpprof[2].'","'
-                        .$tmpprof[3].'","'
-                        .$tmpprof[4].'"';
+          $csvStr .= ',"'.implode('","', $tmpprof).'"';
           $csvStr .= "\n";
         }
       }
@@ -141,10 +109,5 @@ class csvExportActions extends sfActions
 
       return sfView::NONE;
     }
-  }
-
-  private function getString($str)
-  {
-    return is_null($str) || false === $str ? '' : $str;
   }
 }
