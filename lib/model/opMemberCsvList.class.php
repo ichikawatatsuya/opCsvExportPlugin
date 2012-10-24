@@ -111,23 +111,24 @@ class opMemberCsvList implements Iterator
 
   public function getFromTo($from, $to)
   {
-    $member_q = Doctrine::getTable('Member')->createQuery()->select('id, name, created_at, invite_member_id')->where('? <= id', $from);
-    $config_q = Doctrine::getTable('MemberConfig')->createQuery()->select('member_id, name, value, value_datetime')->where('? <= member_id', $from);
-    $profile_q = Doctrine::getTable('MemberProfile')->createQuery()->select('member_id, profile_id, value')->where('? <= member_id', $from);
-    $image_q = Doctrine::getTable('MemberImage')->createQuery()->select('member_id, file_id')->where('? <= member_id', $from);
-    $file_q = Doctrine::getTable('File')->createQuery()->select('id, name')->where('id = (select file_id from member_image where ? <= member_id)', $from);
+    $memberQuery  = Doctrine::getTable('Member')->createQuery()->select('id, name, created_at, invite_member_id')->where('? <= id', $from);
+    $configQuery  = Doctrine::getTable('MemberConfig')->createQuery()->select('member_id, name, value, value_datetime')->where('? <= member_id', $from);
+    $profileQuery = Doctrine::getTable('MemberProfile')->createQuery()->select('member_id, profile_id, value')->where('? <= member_id', $from);
+    $imageQuery   = Doctrine::getTable('MemberImage')->createQuery()->select('member_id, file_id')->where('? <= member_id', $from)->orderBy('member_id');
+    $fileQuery    = Doctrine::getTable('File')->createQuery()->select('id, name')->where('id = (select file_id from member_image where ? <= member_id)', $from);
     if (!is_null($to))
     {
-      $member_q = $member_q->andWhere('id <= ?', $to);
-      $config_q = $config_q->andWhere('member_id <= ?', $to);
-      $profile_q = $profile_q->andWhere('member_id <= ?', $to);
-      $image_q = $image_q->andWhere('member_id <= ?', $to);
-      $file_q = Doctrine::getTable('File')->createQuery()->select('id, name')->where('id = any (select file_id from member_image where ? <= member_id and member_id <= ?)',array($from ,$to));
+      $memberQuery  = $memberQuery->andWhere('id <= ?', $to);
+      $configQuery  = $configQuery->andWhere('member_id <= ?', $to);
+      $profileQuery = $profileQuery->andWhere('member_id <= ?', $to);
+      $imageQuery   = $imageQuery->andWhere('member_id <= ?', $to);
+      $fileQuery    = Doctrine::getTable('File')->createQuery()->select('id, name')->where('id = any (select file_id from member_image where ? <= member_id and member_id <= ?)',array($from ,$to));
     }
-    return array('memberList' => $member_q->execute(array(), Doctrine::HYDRATE_ARRAY),
-                 'configList' => $config_q->execute(array(), Doctrine::HYDRATE_ARRAY),
-                 'profileList' => $profile_q->execute(array(), Doctrine::HYDRATE_ARRAY),
-                 'imageList' => $image_q->execute(array(), Doctrine::HYDRATE_ARRAY),
-                 'fileList' => $file_q->execute(array(), Doctrine::HYDRATE_ARRAY));
+
+    return array('memberList' => $memberQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'configList' => $configQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'profileList' => $profileQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'imageList' => $imageQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'fileList' => $fileQuery->execute(array(), Doctrine::HYDRATE_ARRAY));
   }
 }
