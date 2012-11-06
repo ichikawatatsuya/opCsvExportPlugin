@@ -141,9 +141,13 @@ class csvExportActions extends sfActions
                   }
                   break;
                 case 'radio': case 'select': case 'checkbox':
-                  if (is_null($profile['profile_option_id']))
+                  if (is_null($profile['profile_option_id']) && is_null($profile['value']))
                   {
                     $tempProfile[$profile['profile_id']] = '';
+                  }
+                  elseif (is_null($profile['profile_option_id']) && '' !== $profile['value'])
+                  {
+                    $tempProfile[$profile['profile_id']] = $profile['value'];
                   }
                   else
                   {
