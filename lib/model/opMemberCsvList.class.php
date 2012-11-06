@@ -153,6 +153,7 @@ class opMemberCsvList implements Iterator
     $optionTranslationList = $dataList['optionTranslationList'];
     $csvStr = $this->getHeader() . "\n";
 
+    $profileItems = null;
     foreach (Doctrine::getTable('Profile')->retrievesAll() as $profile)
     {
       $profileItems[$profile->getId()] = $profile;
@@ -227,50 +228,56 @@ class opMemberCsvList implements Iterator
           isset($tempFile[$num]) ? $csvStr .= ',"' . $tempFile[$num] . '"' : $csvStr .= ',""';
         }
 
-        $tempProfile = array_fill(0, count($profileList), '');
-        $profileInFlag = false;
-        foreach ($profileList as $profile)
+        if (0 < count($profileList))
         {
-          if ($profileInFlag && $profile['member_id'] != $member_id) break;
-          if ($profile['member_id'] == $member_id)
+          $tempProfile = array_fill(0, count($profileList), '');
+          $profileInFlag = false;
+          foreach ($profileList as $profile)
           {
-            $profileInFlag = true;
-            switch ($profileItems[$profile['profile_id']]['form_type'])
+            if ($profileInFlag && $profile['member_id'] != $member_id) break;
+            if ($profile['member_id'] == $member_id)
             {
-            case 'date':
-              if ('' === $tempProfile[$profile['profile_id']])
+              $profileInFlag = true;
+              switch ($profileItems[$profile['profile_id']]['form_type'])
               {
+              case 'date':
+                if ('' === $tempProfile[$profile['profile_id']])
+                {
+                  $tempProfile[$profile['profile_id']] = $profile['value'];
+                }
+                else
+                {
+                  $tempProfile[$profile['profile_id']] .= '-' . $profile['value'];
+                }
+                break;
+              case 'radio': case 'select': case 'checkbox':
+                if (is_null($profile['profile_option_id']) && is_null($profile['value']))
+                {
+                  $tempProfile[$profile['profile_id']] = '';
+                }
+                elseif (is_null($profile['profile_option_id']) && '' !== $profile['value'])
+                {
+                  $tempProfile[$profile['profile_id']] = $profile['value'];
+                }
+                elseif (!is_null($profile['profile_option_id']))
+                {
+                  $tempProfile[$profile['profile_id']] .= $optionList[$profile['profile_option_id']]['value'];
+                }
+                break;
+              default:
                 $tempProfile[$profile['profile_id']] = $profile['value'];
+                break;
               }
-              else
-              {
-                $tempProfile[$profile['profile_id']] .= '-' . $profile['value'];
-              }
-              break;
-            case 'radio': case 'select': case 'checkbox':
-              if (is_null($profile['profile_option_id']) && is_null($profile['value']))
-              {
-                $tempProfile[$profile['profile_id']] = '';
-              }
-              elseif (is_null($profile['profile_option_id']) && '' !== $profile['value'])
-              {
-                $tempProfile[$profile['profile_id']] = $profile['value'];
-              }
-              elseif (!is_null($profile['profile_option_id']))
-              {
-                $tempProfile[$profile['profile_id']] .= $optionList[$profile['profile_option_id']]['value'];
-              }
-              break;
-            default:
-              $tempProfile[$profile['profile_id']] = $profile['value'];
-              break;
             }
           }
         }
 
-        foreach ($profileItems as $items)
+        if (!is_null($profileItems))
         {
-          isset($tempProfile[$items['id']]) ? $csvStr .= ',"' . $this->getEscapeString($tempProfile[$items['id']]) . '"' : $csvStr .= ',""';
+          foreach ($profileItems as $items)
+          {
+            isset($tempProfile[$items['id']]) ? $csvStr .= ',"' . $this->getEscapeString($tempProfile[$items['id']]) . '"' : $csvStr .= ',""';
+          }
         }
         $csvStr .= "\n";
       }
