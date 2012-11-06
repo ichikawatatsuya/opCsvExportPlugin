@@ -45,9 +45,6 @@ class opCsvExportTask extends sfDoctrineBaseTask
     }
 
     $memberCsvList = new opMemberCsvList($options['from'], $options['to']);
-    foreach($memberCsvList as $memberCsv)
-    {
-      echo $memberCsv."\n";
-    }
+    echo $memberCsvList->makeCsvList($memberCsvList->getFromTo($options['from'], $options['to']));
   }
 }
