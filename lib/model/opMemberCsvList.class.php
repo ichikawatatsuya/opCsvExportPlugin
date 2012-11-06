@@ -111,11 +111,13 @@ class opMemberCsvList implements Iterator
 
   public function getFromTo($from, $to)
   {
+    $con = Doctrine_Manager::connection();
     $memberQuery  = Doctrine::getTable('Member')->createQuery()->select('id, name, created_at, invite_member_id')->where('? <= id', $from);
     $configQuery  = Doctrine::getTable('MemberConfig')->createQuery()->select('member_id, name, value, value_datetime')->where('? <= member_id', $from);
-    $profileQuery = Doctrine::getTable('MemberProfile')->createQuery()->select('member_id, profile_id, value')->where('? <= member_id', $from);
+    $profileQuery = Doctrine::getTable('MemberProfile')->createQuery()->select('member_id, profile_id, profile_option_id, value')->where('? <= member_id', $from)->orderBy('member_id');
     $imageQuery   = Doctrine::getTable('MemberImage')->createQuery()->select('member_id, file_id')->where('? <= member_id', $from)->orderBy('member_id');
     $fileQuery    = Doctrine::getTable('File')->createQuery()->select('id, name')->where('id = (select file_id from member_image where ? <= member_id)', $from);
+    $profileOptionTranslationQuery = $con->fetchAll('select id,value from profile_option_translation where lang = "en"', array(), Doctrine::HYDRATE_ARRAY);
     if (!is_null($to))
     {
       $memberQuery  = $memberQuery->andWhere('id <= ?', $to);
@@ -129,6 +131,7 @@ class opMemberCsvList implements Iterator
                  'configList' => $configQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
                  'profileList' => $profileQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
                  'imageList' => $imageQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
-                 'fileList' => $fileQuery->execute(array(), Doctrine::HYDRATE_ARRAY));
+                 'fileList' => $fileQuery->execute(array(), Doctrine::HYDRATE_ARRAY),
+                 'optionTranslationList' => $profileOptionTranslationQuery);
   }
 }

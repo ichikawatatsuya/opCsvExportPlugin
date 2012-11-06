@@ -43,11 +43,17 @@ class csvExportActions extends sfActions
       $profileList = $dataList['profileList'];
       $imageList = $dataList['imageList'];
       $fileList = $dataList['fileList'];
+      $optionTranslationList = $dataList['optionTranslationList'];
       $csvStr = opMemberCsvList::getHeader()."\n";
 
       foreach (Doctrine::getTable('Profile')->retrievesAll() as $profile)
       {
-        $profileIds[] = $profile->getId();
+        $profileItems[$profile->getId()] = $profile;
+      }
+
+      foreach ($optionTranslationList as $option)
+      {
+        $optionList[$option['id']] = $option;
       }
       $memberLength = count($memberList);
 
@@ -114,7 +120,7 @@ class csvExportActions extends sfActions
             isset($tempFile[$num]) ? $csvStr .= ',"' . $tempFile[$num] . '"' : $csvStr .= ',""';
           }
 
-          $tempProfile = array();
+          $tempProfile = array_fill(0, count($profileList), '');
           $profileInFlag = false;
           foreach ($profileList as $profile)
           {
@@ -122,13 +128,38 @@ class csvExportActions extends sfActions
             if ($profile['member_id'] == $member_id)
             {
               $profileInFlag = true;
-              $tempProfile[$profile['profile_id'] - 1] = $profile['value'];
+              switch ($profileItems[$profile['profile_id']]['form_type'])
+              {
+                case 'date':
+                  if ('' === $tempProfile[$profile['profile_id']])
+                  {
+                    $tempProfile[$profile['profile_id']] = $profile['value'];
+                  }
+                  else
+                  {
+                    $tempProfile[$profile['profile_id']] .= '-' . $profile['value'];
+                  }
+                  break;
+                case 'radio': case 'select': case 'checkbox':
+                  if (is_null($profile['profile_option_id']))
+                  {
+                    $tempProfile[$profile['profile_id']] = '';
+                  }
+                  else
+                  {
+                    $tempProfile[$profile['profile_id']] .= $optionList[$profile['profile_option_id']]['value'];
+                  }
+                  break;
+                default:
+                  $tempProfile[$profile['profile_id']] = $profile['value'];
+                  break;
+              }
             }
           }
 
-          foreach ($profileIds as $ids)
+          foreach ($profileItems as $items)
           {
-            isset($tempProfile[$ids]) ? $csvStr .= ',"' . $this->getEscapeString($tempProfile[$ids]) . '"' : $csvStr .= ',""';
+            isset($tempProfile[$items['id']]) ? $csvStr .= ',"' . $this->getEscapeString($tempProfile[$items['id']]) . '"' : $csvStr .= ',""';
           }
           $csvStr .= "\n";
         }
